@@ -1,0 +1,4 @@
+pikafish-avx2 		617108
+pikafish-avxvnni 	606875
+pikafish-bmi2 		627965
+pikafish-sse41-popcnt 509993
