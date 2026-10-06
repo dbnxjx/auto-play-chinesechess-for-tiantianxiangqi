@@ -27,6 +27,9 @@ class Settings:
     think_time: float
     click_delay: float
     adb_path: str
+    variant: str
+    board_rows: int
+    board_columns: int
     engine_path: Path
     nnue_path: Path
 
@@ -50,6 +53,9 @@ def load_settings(config_path: Path | None = None) -> Settings:
         think_time=parser.getfloat("AI", "think_time", fallback=1.0),
         click_delay=parser.getfloat("Click", "click_delay", fallback=0.2),
         adb_path=parser.get("ADB", "adb_path", fallback="adb"),
+        variant=parser.get("Game", "variant", fallback="minixiangqi"),
+        board_rows=parser.getint("Game", "board_rows", fallback=7),
+        board_columns=parser.getint("Game", "board_columns", fallback=7),
         engine_path=_resolve_path(parser.get("Engine", "engine_path")),
         nnue_path=_resolve_path(parser.get("Engine", "nnue_path")),
     )

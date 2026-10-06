@@ -5,27 +5,33 @@ import time
 from pathlib import Path
 
 
-class PikafishEngine:
-    def __init__(self, engine_path: Path, nnue_path: Path) -> None:
+class FairyStockfishEngine:
+    """UCI client configured for the Fairy-Stockfish minixiangqi variant."""
+
+    def __init__(self, engine_path: Path, nnue_path: Path, variant: str) -> None:
         self.engine_path = engine_path
         self.nnue_path = nnue_path
+        self.variant = variant
         self.process: subprocess.Popen[str] | None = None
 
     def start(self) -> None:
         if not self.engine_path.is_file():
-            raise FileNotFoundError(f"Pikafish executable not found: {self.engine_path}")
+            raise FileNotFoundError(f"Fairy-Stockfish executable not found: {self.engine_path}")
+        if not self.nnue_path.is_file():
+            raise FileNotFoundError(f"NNUE weight not found: {self.nnue_path}")
         self.process = subprocess.Popen(
             [str(self.engine_path)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             text=True, encoding="utf-8", creationflags=subprocess.CREATE_NO_WINDOW,
         )
         self._send("uci")
         self._wait_for("uciok", 10)
+        self._send(f"setoption name UCI_Variant value {self.variant}")
         self._send("setoption name EvalFile value " + str(self.nnue_path))
         self._send("setoption name Threads value 8")
         self._send("setoption name Hash value 1536")
-        self._send("setoption name Repetition Rule value SkyRule")
         self._send("isready")
         self._wait_for("readyok", 10)
+        self._send("ucinewgame")
 
     def best_move(self, fen: str, think_time: float) -> str | None:
         self._send("position fen " + fen)
@@ -34,7 +40,8 @@ class PikafishEngine:
         while time.monotonic() < deadline:
             line = self._read()
             if line.startswith("bestmove"):
-                return line.split()[1]
+                move = line.split()[1]
+                return None if move == "(none)" else move
         return None
 
     def close(self) -> None:
@@ -45,7 +52,7 @@ class PikafishEngine:
 
     def _send(self, command: str) -> None:
         if not self.process or not self.process.stdin:
-            raise RuntimeError("Pikafish has not started")
+            raise RuntimeError("Fairy-Stockfish has not started")
         self.process.stdin.write(command + "\n")
         self.process.stdin.flush()
 
@@ -59,4 +66,4 @@ class PikafishEngine:
         while time.monotonic() < deadline:
             if self._read() == expected:
                 return
-        raise TimeoutError(f"Pikafish did not return {expected}")
+        raise TimeoutError(f"Fairy-Stockfish did not return {expected}")

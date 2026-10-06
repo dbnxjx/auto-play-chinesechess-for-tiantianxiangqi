@@ -33,13 +33,15 @@ class CellClassifier:
 
 
 class ChessRecognizer:
-    def __init__(self, cell_model_path, piece_model_path, marker_model_path) -> None:
+    def __init__(self, cell_model_path, piece_model_path, marker_model_path, rows: int = 7, columns: int = 7) -> None:
         self.cell = CellClassifier(cell_model_path, 3)
         self.piece = CellClassifier(piece_model_path, 15)
         self.marker = CellClassifier(marker_model_path, 2)
+        self.rows = rows
+        self.columns = columns
 
     def recognize_board(self, board_image: np.ndarray) -> np.ndarray:
-        result = np.zeros((10, 9), dtype=int)
+        result = np.zeros((self.rows, self.columns), dtype=int)
         for row, column, cell in self._cells(board_image):
             result[row, column] = PIECE_CLASS_TO_VALUE[self.piece.predict(cell)]
         return result
@@ -50,7 +52,8 @@ class ChessRecognizer:
 
     def _cells(self, board_image: np.ndarray):
         height, width = board_image.shape[:2]
-        cell_height, cell_width = height // 10, width // 9
-        for row in range(10):
-            for column in range(9):
-                yield row, column, board_image[row * cell_height:(row + 1) * cell_height, column * cell_width:(column + 1) * cell_width]
+        for row in range(self.rows):
+            y1, y2 = row * height // self.rows, (row + 1) * height // self.rows
+            for column in range(self.columns):
+                x1, x2 = column * width // self.columns, (column + 1) * width // self.columns
+                yield row, column, board_image[y1:y2, x1:x2]

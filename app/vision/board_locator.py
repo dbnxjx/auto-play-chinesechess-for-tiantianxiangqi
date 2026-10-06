@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import torch
 from ultralytics import YOLO
 
 
@@ -10,7 +11,8 @@ class BoardLocator:
         self.confidence = confidence
 
     def locate(self, frame: np.ndarray) -> tuple[np.ndarray, tuple[int, int, int, int]] | None:
-        results = self.model(frame, device=0, verbose=False, conf=self.confidence)
+        device = 0 if torch.cuda.is_available() else "cpu"
+        results = self.model(frame, device=device, verbose=False, conf=self.confidence)
         boxes = [box for result in results for box in result.boxes]
         if not boxes:
             return None
