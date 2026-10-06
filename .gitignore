@@ -1,4 +1,3 @@
 .venv/
 model_train/data/
 model_train/yolo/
-test/
